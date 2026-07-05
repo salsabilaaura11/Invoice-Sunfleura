@@ -343,7 +343,16 @@
 			    btn.innerHTML = 'Memproses PDF...';
 			    btn.disabled = true;
 			
-			    html2pdf().set(opt).from(element).save().then(() => {
+			    // Jalankan render ke PDF, tapi jangan disave dulu
+			    html2pdf().set(opt).from(element).toPdf().get('pdf').then(function(pdf) {
+			        // Hitung ada berapa halaman totalnya
+			        var totalPages = pdf.internal.getNumberOfPages();
+			        
+			        // Kalau ternyata sistem bikin lebih dari 1 halaman, hapus sisanya
+			        for (var i = 2; i <= totalPages; i++) {
+			            pdf.deletePage(i);
+			        }
+			    }).save().then(() => {
 			        btn.innerHTML = originalText;
 			        btn.disabled = false;
 			    }).catch(err => {
