@@ -147,7 +147,7 @@
 
                 <div class="flex justify-between items-center w-full text-white font-sans text-sm pb-1" id="prev-grand-total">
                     <span class="font-bold tracking-widest uppercase">TOTAL</span>
-                    <span class="font-bold">Rp0</span>
+                    <span class="font-bold">Rp 0</span>
                 </div>
 
                 <div class="border-t border-invoiceborder w-full mb-8"></div>
@@ -177,8 +177,8 @@
 
         // Format angka (misal 45000 -> Rp45.000)
         function formatRupiah(angka) {
-            if (!angka || isNaN(angka)) return 'Rp0';
-            return 'Rp' + parseInt(angka).toLocaleString('id-ID').replace(/,/g, '.');
+            if (!angka || isNaN(angka)) return 'Rp 0';
+            return 'Rp ' + parseInt(angka).toLocaleString('id-ID').replace(/,/g, '.');
         }
 
         // Format Date YYYY-MM-DD -> D/M/YYYY
@@ -294,7 +294,7 @@
                         </td>
                         <td class="text-center pb-2 w-[15%]"></td>
                         <td class="text-right pb-2 w-[20%]"></td>
-                        <td class="text-right pb-2 w-[20%]">Rp0</td>
+                        <td class="text-right pb-2 w-[20%]">Rp 0</td>
                     </tr>
                 `;
             }
