@@ -9,7 +9,8 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:ital,wght@400;600&display=swap" rel="stylesheet">
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Ganti library ke html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -85,9 +86,10 @@
                     <button type="button" onclick="generatePreview()" class="flex-1 bg-slate-800 text-white font-semibold py-3 rounded-lg hover:bg-slate-900 transition">
                         Update Preview
                     </button>
-                    <button type="button" onclick="downloadPDF(event)" class="flex-1 bg-emerald-600 text-white font-semibold py-3 rounded-lg hover:bg-emerald-700 transition flex items-center justify-center gap-2">
+                    <!-- Tombol diubah menjadi Unduh Gambar -->
+                    <button type="button" onclick="downloadImage(event)" class="flex-1 bg-emerald-600 text-white font-semibold py-3 rounded-lg hover:bg-emerald-700 transition flex items-center justify-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        Unduh PDF
+                        Unduh PNG
                     </button>
                 </div>
             </form>
@@ -103,7 +105,7 @@
 					<!-- Atas: Logo di Tengah -->
 					<div class="flex justify-center w-full mb-10 pt-2">
 						<!-- Placeholder logo, ganti dengan logo.png -->
-						<img src="Logo.png" alt="Logo Sunfleura" class="w-48 h-auto object-contain">
+						<img src="logo.png" alt="Logo Sunfleura" class="w-48 h-auto object-contain">
 					</div>
 					
 					<!-- Bawah: Dibagi 2 Kolom (Kiri: Invoice+Tgl, Kanan: Nama Pelanggan) -->
@@ -127,7 +129,7 @@
                     <thead>
                         <tr class="border-b border-invoiceborder">
                             <th class="text-left font-bold pb-3 w-[45%]">Pesanan</th>
-                            <th class="text-center font-bold pb-3 w-[15%]">Banyak</th>
+                            <th class="text-center font-bold pb-3 w-[15%]">Qty</th>
                             <th class="text-right font-bold pb-3 w-[20%]">Harga</th>
                             <th class="text-right font-bold pb-3 w-[20%]">Total</th>
                         </tr>
@@ -147,7 +149,7 @@
 
                 <div class="flex justify-between items-center w-full text-white font-sans text-sm pb-1" id="prev-grand-total">
                     <span class="font-bold tracking-widest uppercase">TOTAL</span>
-                    <span class="font-bold">Rp 0</span>
+                    <span class="font-bold">Rp0</span>
                 </div>
 
                 <div class="border-t border-invoiceborder w-full mb-8"></div>
@@ -177,8 +179,8 @@
 
         // Format angka (misal 45000 -> Rp45.000)
         function formatRupiah(angka) {
-            if (!angka || isNaN(angka)) return 'Rp 0';
-            return 'Rp ' + parseInt(angka).toLocaleString('id-ID').replace(/,/g, '.');
+            if (!angka || isNaN(angka)) return 'Rp0';
+            return 'Rp' + parseInt(angka).toLocaleString('id-ID').replace(/,/g, '.');
         }
 
         // Format Date YYYY-MM-DD -> D/M/YYYY
@@ -200,7 +202,7 @@
                         <input type="text" class="item-name w-full border border-slate-300 rounded-md p-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1" placeholder="Nama Barang..." required>
                     </div>
                     <div class="w-full sm:w-20">
-                        <input type="number" class="item-qty w-full border border-slate-300 rounded-md p-2 text-sm text-center focus:outline-none focus:border-blue-500 focus:ring-1" placeholder="Banyak" value="1" min="1" required>
+                        <input type="number" class="item-qty w-full border border-slate-300 rounded-md p-2 text-sm text-center focus:outline-none focus:border-blue-500 focus:ring-1" placeholder="Qty" value="1" min="1" required>
                     </div>
                     <div class="w-full sm:w-32">
                         <input type="number" class="item-price w-full border border-slate-300 rounded-md p-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1" placeholder="Harga Satuan" required>
@@ -294,7 +296,7 @@
                         </td>
                         <td class="text-center pb-2 w-[15%]"></td>
                         <td class="text-right pb-2 w-[20%]"></td>
-                        <td class="text-right pb-2 w-[20%]">Rp 0</td>
+                        <td class="text-right pb-2 w-[20%]">Rp0</td>
                     </tr>
                 `;
             }
@@ -306,61 +308,48 @@
             `;
         }
 
-        // Algoritma Unduh via jsPDF + html2canvas
-        // Logika Unduh PDF menggunakan html2pdf
-			function downloadPDF(event) {
-			    // Pastikan data terbaru sudah ter-render
-			    generatePreview();
-			    
-			    const element = document.getElementById('invoice-preview');
-			    const customerName = document.getElementById('input-name').value.trim() || 'Pelanggan';
-			    const dateVal = document.getElementById('input-date').value || 'Hari_Ini';
-			    
-			    const opt = {
-			        margin:       0,
-			        filename:     `Invoice_Sunfleura_${customerName}_${dateVal}.pdf`,
-			        image:        { type: 'jpeg', quality: 1.0 },
-			        pagebreak:    { mode: 'avoid-all' }, // KUNCI 1: Paksa sistem agar tidak memotong ke halaman 2
-			        html2canvas:  { 
-			            scale: 3, 
-			            useCORS: true, 
-			            backgroundColor: '#121212',
-			            scrollY: 0,
-			            windowHeight: element.scrollHeight // KUNCI 2: Ambil ukuran penuh seberapa pun panjang kontennya
-			        },
-			        jsPDF: { 
-			            unit: 'px', 
-			            // KUNCI 3: Gunakan scrollHeight alih-alih offsetHeight
-			            format: [420, element.scrollHeight], 
-			            orientation: 'portrait',
-			            hotfixes: ["px_scaling"]
-			        }
-			    };
+        // Algoritma Unduh ke format PNG menggunakan html2canvas
+		function downloadImage(event) {
+			// Pastikan data terbaru sudah ter-render
+			generatePreview();
 			
-			    // Tambah state loading pada tombol
-			    const btn = event.currentTarget;
-			    const originalText = btn.innerHTML;
-			    btn.innerHTML = 'Memproses PDF...';
-			    btn.disabled = true;
+			const element = document.getElementById('invoice-preview');
+			const customerName = document.getElementById('input-name').value.trim() || 'Pelanggan';
+			const dateVal = document.getElementById('input-date').value || 'Hari_Ini';
+            const filename = `Invoice_Sunfleura_${customerName}_${dateVal}.png`;
 			
-			    // Jalankan render ke PDF, tapi jangan disave dulu
-			    html2pdf().set(opt).from(element).toPdf().get('pdf').then(function(pdf) {
-			        // Hitung ada berapa halaman totalnya
-			        var totalPages = pdf.internal.getNumberOfPages();
-			        
-			        // Kalau ternyata sistem bikin lebih dari 1 halaman, hapus sisanya
-			        for (var i = 2; i <= totalPages; i++) {
-			            pdf.deletePage(i);
-			        }
-			    }).save().then(() => {
-			        btn.innerHTML = originalText;
-			        btn.disabled = false;
-			    }).catch(err => {
-			        alert("Terjadi kesalahan saat mengunduh PDF: " + err);
-			        btn.innerHTML = originalText;
-			        btn.disabled = false;
-			    });
-        }
+			// Tambah state loading pada tombol
+			const btn = event.currentTarget;
+			const originalText = btn.innerHTML;
+			btn.innerHTML = 'Memproses Gambar...';
+			btn.disabled = true;
+
+            // Gunakan html2canvas langsung
+            html2canvas(element, {
+                scale: 3, // Skala tinggi agar jernih dan tidak pecah
+                useCORS: true, 
+                backgroundColor: '#121212',
+                scrollY: 0,
+                windowHeight: element.scrollHeight
+            }).then(canvas => {
+                // Convert canvas ke Data URL format PNG
+                const imgData = canvas.toDataURL('image/png');
+
+                // Buat link temporary untuk trigger auto-download
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = imgData;
+                link.click();
+
+                // Kembalikan state tombol
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }).catch(err => {
+                alert("Terjadi kesalahan saat mengunduh gambar: " + err);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+		}
     </script>
 </body>
 </html>
